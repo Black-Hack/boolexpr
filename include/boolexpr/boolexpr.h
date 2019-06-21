@@ -17,7 +17,6 @@
 
 #ifdef __cplusplus
 
-#include <boost/optional.hpp>
 #include "core/Solver.h"  // Solver, lbool, vec
 
 #include <functional>  // function
@@ -30,6 +29,7 @@
 #include <unordered_set>
 #include <utility>  // pair
 #include <vector>
+#include <optional>
 
 // Kind checks
 #define IS_ZERO(expr) ((expr)->kind == boolexpr::BoolExpr::ZERO)
@@ -101,7 +101,7 @@ using var2bx_t = std::unordered_map<var_t, bx_t>;
 using var2op_t = std::unordered_map<var_t, op_t>;
 using point_t = std::unordered_map<var_t, const_t>;
 
-using soln_t = std::pair<bool, boost::optional<point_t>>;
+using soln_t = std::pair<bool, std::optional<point_t>>;
 
 using array_t = std::unique_ptr<Array>;
 

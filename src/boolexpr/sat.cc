@@ -73,13 +73,13 @@ static void encode_cmsat(std::unordered_map<uint32_t, var_t> &idx2var,
 
 soln_t BoolExpr::sat() const { return simplify()->_sat(); }
 
-soln_t Zero::_sat() const { return make_pair(false, boost::none); }
+soln_t Zero::_sat() const { return make_pair(false, std::optional<point_t>()); }
 
 soln_t One::_sat() const { return make_pair(true, point_t{}); }
 
-soln_t Logical::_sat() const { return make_pair(false, boost::none); }
+soln_t Logical::_sat() const { return make_pair(false, std::optional<point_t>()); }
 
-soln_t Illogical::_sat() const { return make_pair(false, boost::none); }
+soln_t Illogical::_sat() const { return make_pair(false, std::optional<point_t>()); }
 
 soln_t Complement::_sat() const {
     auto self = shared_from_this();
@@ -117,7 +117,7 @@ soln_t Operator::_sat() const {
         }
         return make_pair(true, std::move(point));
     } else {
-        return make_pair(false, boost::none);
+        return make_pair(false, std::optional<point_t>());
     }
 }
 
