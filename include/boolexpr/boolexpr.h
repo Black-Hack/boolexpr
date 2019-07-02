@@ -354,6 +354,7 @@ class Operator : public BoolExpr {
 public:
     bool const simple;
     std::vector<bx_t> const args;
+    mutable bx_t cnf_cache, dnf_cache;
 
     Operator(Kind kind, bool simple, std::vector<bx_t> const &args);
     Operator(Kind kind, bool simple, std::vector<bx_t> const &&args);

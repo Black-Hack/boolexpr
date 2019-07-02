@@ -155,9 +155,19 @@ static vector<set<lit_t>> _product(vector<set<lit_t>> const& clauses) {
 
 bx_t Atom::to_cnf() const { return shared_from_this(); }
 
-bx_t Nor::to_cnf() const { return to_posop()->to_cnf(); }
+bx_t Nor::to_cnf() const {
+    if (cnf_cache) {
+        return cnf_cache;
+    }
+
+    return cnf_cache = to_posop()->to_cnf();
+}
 
 bx_t Or::to_cnf() const {
+    if (cnf_cache) {
+        return cnf_cache;
+    }
+
     auto or_or_and = transform([](bx_t const& arg) { return arg->to_dnf(); });
     auto bx = or_or_and->simplify();
 
@@ -177,12 +187,22 @@ bx_t Or::to_cnf() const {
     for (auto const& clause : clauses) {
         args.push_back(or_s(vector<bx_t>(clause.cbegin(), clause.cend())));
     }
-    return and_s(std::move(args));
+    return cnf_cache = and_s(std::move(args));
 }
 
-bx_t Nand::to_cnf() const { return to_posop()->to_cnf(); }
+bx_t Nand::to_cnf() const {
+    if (cnf_cache) {
+        return cnf_cache;
+    }
+
+    return cnf_cache = to_posop()->to_cnf();
+}
 
 bx_t And::to_cnf() const {
+    if (cnf_cache) {
+        return cnf_cache;
+    }
+
     auto and_and_or = transform([](bx_t const& arg) { return arg->to_cnf(); });
     auto bx = and_and_or->simplify();
 
@@ -202,12 +222,22 @@ bx_t And::to_cnf() const {
     for (auto const& clause : clauses) {
         args.push_back(or_s(vector<bx_t>(clause.cbegin(), clause.cend())));
     }
-    return and_s(std::move(args));
+    return cnf_cache = and_s(std::move(args));
 }
 
-bx_t Xnor::to_cnf() const { return to_posop()->to_cnf(); }
+bx_t Xnor::to_cnf() const {
+    if (cnf_cache) {
+        return cnf_cache;
+    }
+
+    return cnf_cache = to_posop()->to_cnf();
+}
 
 bx_t Xor::to_cnf() const {
+    if (cnf_cache) {
+        return cnf_cache;
+    }
+
     size_t n = args.size();
 
     vector<bx_t> clauses;
@@ -221,10 +251,14 @@ bx_t Xor::to_cnf() const {
         }
     }
 
-    return and_(std::move(clauses))->to_cnf();
+    return cnf_cache = and_(std::move(clauses))->to_cnf();
 }
 
 bx_t Unequal::to_cnf() const {
+    if (cnf_cache) {
+        return cnf_cache;
+    }
+
     size_t n = args.size();
 
     vector<bx_t> xs(n), xns(n);
@@ -233,10 +267,14 @@ bx_t Unequal::to_cnf() const {
         xs[i] = args[i];
     }
 
-    return (or_(std::move(xns)) & or_(std::move(xs)))->to_cnf();
+    return cnf_cache = (or_(std::move(xns)) & or_(std::move(xs)))->to_cnf();
 }
 
 bx_t Equal::to_cnf() const {
+    if (cnf_cache) {
+        return cnf_cache;
+    }
+
     size_t n = args.size();
     vector<bx_t> terms(n * (n - 1));
 
@@ -248,44 +286,70 @@ bx_t Equal::to_cnf() const {
         }
     }
 
-    return and_(std::move(terms))->to_cnf();
+    return cnf_cache = and_(std::move(terms))->to_cnf();
 }
 
 bx_t NotImplies::to_cnf() const {
+    if (cnf_cache) {
+        return cnf_cache;
+    }
+
     auto p = args[0];
     auto q = args[1];
 
-    return (p & ~q)->to_cnf();
+    return cnf_cache = (p & ~q)->to_cnf();
 }
 
 bx_t Implies::to_cnf() const {
+    if (cnf_cache) {
+        return cnf_cache;
+    }
+
     auto p = args[0];
     auto q = args[1];
 
-    return (~p | q)->to_cnf();
+    return cnf_cache = (~p | q)->to_cnf();
 }
 
 bx_t NotIfThenElse::to_cnf() const {
+    if (cnf_cache) {
+        return cnf_cache;
+    }
+
     auto s = args[0];
     auto d1 = args[1];
     auto d0 = args[2];
 
-    return ((~s | ~d1) & (s | ~d0))->to_cnf();
+    return cnf_cache = ((~s | ~d1) & (s | ~d0))->to_cnf();
 }
 
 bx_t IfThenElse::to_cnf() const {
+    if (cnf_cache) {
+        return cnf_cache;
+    }
+
     auto s = args[0];
     auto d1 = args[1];
     auto d0 = args[2];
 
-    return ((~s | d1) & (s | d0))->to_cnf();
+    return cnf_cache = ((~s | d1) & (s | d0))->to_cnf();
 }
 
 bx_t Atom::to_dnf() const { return shared_from_this(); }
 
-bx_t Nor::to_dnf() const { return to_posop()->to_dnf(); }
+bx_t Nor::to_dnf() const {
+    if (dnf_cache) {
+        return dnf_cache;
+    }
+
+    return dnf_cache = to_posop()->to_dnf();
+}
 
 bx_t Or::to_dnf() const {
+    if (dnf_cache) {
+        return dnf_cache;
+    }
+
     auto or_or_and = transform([](bx_t const& arg) { return arg->to_dnf(); });
     auto bx = or_or_and->simplify();
 
@@ -305,12 +369,22 @@ bx_t Or::to_dnf() const {
     for (auto const& clause : clauses) {
         args.push_back(and_s(vector<bx_t>(clause.cbegin(), clause.cend())));
     }
-    return or_s(std::move(args));
+    return dnf_cache = or_s(std::move(args));
 }
 
-bx_t Nand::to_dnf() const { return to_posop()->to_dnf(); }
+bx_t Nand::to_dnf() const {
+    if (dnf_cache) {
+        return dnf_cache;
+    }
+
+    return dnf_cache = to_posop()->to_dnf();
+}
 
 bx_t And::to_dnf() const {
+    if (dnf_cache) {
+        return dnf_cache;
+    }
+
     auto and_and_or = transform([](bx_t const& arg) { return arg->to_dnf(); });
     auto bx = and_and_or->simplify();
 
@@ -330,12 +404,22 @@ bx_t And::to_dnf() const {
     for (auto const& clause : clauses) {
         args.push_back(and_s(vector<bx_t>(clause.cbegin(), clause.cend())));
     }
-    return or_s(std::move(args));
+    return dnf_cache = or_s(std::move(args));
 }
 
-bx_t Xnor::to_dnf() const { return to_posop()->to_dnf(); }
+bx_t Xnor::to_dnf() const {
+    if (dnf_cache) {
+        return dnf_cache;
+    }
+
+    return dnf_cache = to_posop()->to_dnf();
+}
 
 bx_t Xor::to_dnf() const {
+    if (dnf_cache) {
+        return dnf_cache;
+    }
+
     size_t n = args.size();
 
     vector<bx_t> clauses;
@@ -349,10 +433,14 @@ bx_t Xor::to_dnf() const {
         }
     }
 
-    return or_(std::move(clauses))->to_dnf();
+    return dnf_cache = or_(std::move(clauses))->to_dnf();
 }
 
 bx_t Unequal::to_dnf() const {
+    if (dnf_cache) {
+        return dnf_cache;
+    }
+
     size_t n = args.size();
     vector<bx_t> terms(n * (n - 1));
 
@@ -364,7 +452,7 @@ bx_t Unequal::to_dnf() const {
         }
     }
 
-    return or_(std::move(terms))->to_dnf();
+    return dnf_cache = or_(std::move(terms))->to_dnf();
 }
 
 bx_t Equal::to_dnf() const {
@@ -380,33 +468,49 @@ bx_t Equal::to_dnf() const {
 }
 
 bx_t NotImplies::to_dnf() const {
+    if (dnf_cache) {
+        return dnf_cache;
+    }
+
     auto p = args[0];
     auto q = args[1];
 
-    return (p & ~q)->to_dnf();
+    return dnf_cache = (p & ~q)->to_dnf();
 }
 
 bx_t Implies::to_dnf() const {
+    if (dnf_cache) {
+        return dnf_cache;
+    }
+
     auto p = args[0];
     auto q = args[1];
 
-    return (~p | q)->to_dnf();
+    return dnf_cache = (~p | q)->to_dnf();
 }
 
 bx_t NotIfThenElse::to_dnf() const {
+    if (dnf_cache) {
+        return dnf_cache;
+    }
+
     auto s = args[0];
     auto d1 = args[1];
     auto d0 = args[2];
 
-    return ((s & ~d1) | (~s & ~d0))->to_dnf();
+    return dnf_cache = ((s & ~d1) | (~s & ~d0))->to_dnf();
 }
 
 bx_t IfThenElse::to_dnf() const {
+    if (dnf_cache) {
+        return dnf_cache;
+    }
+
     auto s = args[0];
     auto d1 = args[1];
     auto d0 = args[2];
 
-    return ((s & d1) | (~s & d0))->to_dnf();
+    return dnf_cache = ((s & d1) | (~s & d0))->to_dnf();
 }
 
 }  // namespace boolexpr
